@@ -307,8 +307,8 @@ MonoBehaviour:
   switchSettingsMigration: 1
   HasSourceProject: 1
   HasPlatforms: 1
-  sourceProjectPath: ../OneDrive/Documents/FMOD Studio/Respect_B_gamemusic/Respect_B_gamemusic.fspro
-  sourceBankPath: ../OneDrive/Documents/FMOD Studio/Respect_B_gamemusic/Build
+  sourceProjectPath: ../DJmax_respect_B/Respect_B_gamemusic/Respect_B_gamemusic.fspro
+  sourceBankPath: ../DJmax_respect_B/Respect_B_gamemusic/Build
   sourceBankPathUnformatted: 
   BankRefreshCooldown: 5
   ShowBankRefreshWindow: 1
