@@ -160,6 +160,7 @@ public class MusicManager : MonoBehaviour
             smallLineRect.localScale = Vector3.one;
             smallLine.SetActive(currentMode == Mode.Twelve); // 초기화할 때 현재 모드에 해당하면 활성화
             twelveLines.Add(smallLine);
+            smallBars.Add(smallLineRect);
         }
 
         // 16분할 라인 생성 및 비활성화
@@ -172,33 +173,12 @@ public class MusicManager : MonoBehaviour
             smallLineRect.localScale = Vector3.one;
             smallLine.SetActive(currentMode == Mode.Sixteen); // 초기화할 때 현재 모드에 해당하면 활성화
             sixteenLines.Add(smallLine);
+            smallBars.Add(smallLineRect);
         }
     }
 }
-    private void OnSmallLineClicked(RectTransform lineRect, int lineIndex)
-{
-    // 배치할 X, Y 좌표 계산
-    Vector2 notePosition = new Vector2(lineXPositions[lineIndex], lineRect.anchoredPosition.y);
+    
 
-    // 이미 해당 위치에 노트가 있는지 확인
-    GameObject existingNote = notes.Find(note => note.GetComponent<RectTransform>().anchoredPosition == notePosition);
-
-    if (existingNote != null)
-    {
-        // ➡️ 노트가 이미 있으면 삭제
-        notes.Remove(existingNote);
-        Destroy(existingNote);
-    }
-    else
-    {
-        // ➡️ 노트가 없으면 생성
-        GameObject note = Instantiate(notePrefab, content);
-        RectTransform noteRect = note.GetComponent<RectTransform>();
-        noteRect.anchoredPosition = notePosition;
-        noteRect.localScale = Vector3.one;
-        notes.Add(note);
-    }
-}
 
     private void UpdateBarsVisibility()
     {
@@ -239,37 +219,23 @@ public class MusicManager : MonoBehaviour
         // ⏸️ 일시정지 중 사용자가 스크롤을 조작하면 재생 시간 변경
         UpdateTimeFromScroll();
     }
-    // 🔥 노트 배치 중일 때 마우스를 따라다니기
     if (isPlacingNote && movingNote != null)
     {
         Vector2 mousePosition = Input.mousePosition;
         Vector2 localPoint;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(content, mousePosition, null, out localPoint);
 
-        // ➡️ 가로로 4개 라인 중 가장 가까운 라인에 스냅
-        float closestX = lineXPositions[0];
-        float minXDistance = Mathf.Abs(localPoint.x - lineXPositions[0]);
-
-        for (int i = 1; i < lineXPositions.Length; i++)
-        {
-            float distance = Mathf.Abs(localPoint.x - lineXPositions[i]);
-            if (distance < minXDistance)
-            {
-                minXDistance = distance;
-                closestX = lineXPositions[i];
-            }
-        }
-
-        // ➡️ Y 좌표는 마우스 위치 그대로
-        movingNote.GetComponent<RectTransform>().anchoredPosition = new Vector2(closestX, localPoint.y);
+        // ➡️ 마우스 위치 그대로 따라가기
+        movingNote.GetComponent<RectTransform>().anchoredPosition = localPoint;
     }
 
-    // 🔥 마우스 클릭 시 노트 고정 및 새로운 노트 생성
+    // 🔥 마우스 클릭 시 가장 가까운 스냅 포인트에 붙이기
     if (Input.GetMouseButtonDown(0))
     {
         if (isPlacingNote)
         {
             // ➡️ 현재 노트 고정
+            SnapNoteToClosestPoint();
             movingNote = null;
             isPlacingNote = false;
         }
@@ -281,6 +247,76 @@ public class MusicManager : MonoBehaviour
             isPlacingNote = true;
         }
     }
+}
+
+private void SnapNoteToClosestPoint()
+{
+    if (movingNote == null) return;
+
+    RectTransform noteRect = movingNote.GetComponent<RectTransform>();
+    Vector2 notePosition = noteRect.anchoredPosition;
+
+    // ➡️ 가장 가까운 가로 라인 찾기
+    float closestX = lineXPositions[0];
+    float minXDistance = Mathf.Abs(notePosition.x - lineXPositions[0]);
+    for (int i = 1; i < lineXPositions.Length; i++)
+    {
+        float distance = Mathf.Abs(notePosition.x - lineXPositions[i]);
+        if (distance < minXDistance)
+        {
+            minXDistance = distance;
+            closestX = lineXPositions[i];
+        }
+    }
+
+    // ➡️ 가장 가까운 작은 바 찾기
+    float closestY = notePosition.y;
+    float minYDistance = float.MaxValue;
+
+    foreach (RectTransform smallBar in smallBars)
+    {
+        float distance = Mathf.Abs(notePosition.y - smallBar.anchoredPosition.y);
+        if (distance < minYDistance)
+        {
+            minYDistance = distance;
+            closestY = smallBar.anchoredPosition.y;
+        }
+    }
+
+    // ➡️ 노트 위치 업데이트
+    noteRect.anchoredPosition = new Vector2(closestX, closestY);
+
+    // ➡️ 기존 노트와 겹치는지 확인
+    for (int i = 0; i < notes.Count; i++)
+    {
+        GameObject existingNote = notes[i];
+
+        // 삭제된 노트는 건너뛰기
+        if (existingNote == null)
+        {
+            notes.RemoveAt(i);
+            i--; // 리스트에서 제거된 인덱스를 보정
+            continue;
+        }
+
+        RectTransform existingNoteRect = existingNote.GetComponent<RectTransform>();
+        // 두 노트의 위치가 거의 같으면 겹친 것으로 간주
+        if (Vector2.Distance(existingNoteRect.anchoredPosition, noteRect.anchoredPosition) < 10f) // 10f는 겹침 판별 거리 (조정 가능)
+        {
+            // 겹치는 두 노트 삭제
+            Destroy(existingNote); // 기존 노트 삭제
+            notes.RemoveAt(i); // 리스트에서 기존 노트 제거
+            i--; // 리스트에서 제거된 인덱스를 보정
+
+            Destroy(movingNote); // 새로 배치하려는 노트 삭제
+            movingNote = null; // 참조를 null로 설정
+
+            return; // 더 이상 노트를 배치하지 않음
+        }
+    }
+
+    // ➡️ 겹치지 않으면 노트 저장
+    notes.Add(movingNote);
 }
 
 // 스크롤 위치를 기반으로 재생 시간을 변경하는 함수
