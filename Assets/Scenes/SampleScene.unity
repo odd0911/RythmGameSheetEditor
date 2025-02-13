@@ -691,6 +691,7 @@ MonoBehaviour:
   button16: {fileID: 389272114}
   heightPerSecond: 300
   scrollSpeed: 100
+  notePrefab: {fileID: 1534138378787427512, guid: 4b9a1aef2a0ec714f92e7d7e2d8f85e1, type: 3}
 --- !u!4 &319602340
 Transform:
   m_ObjectHideFlags: 0

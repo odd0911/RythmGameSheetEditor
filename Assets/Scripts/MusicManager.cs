@@ -3,6 +3,7 @@ using UnityEngine.UI; // 버튼을 사용하려면 필요
 using FMODUnity;
 using TMPro; // TextMeshPro 네임스페이스
 using FMOD.Studio;
+using System.Collections.Generic;
 
 public class MusicManager : MonoBehaviour
 {
@@ -43,11 +44,26 @@ public class MusicManager : MonoBehaviour
     private float heightPerSecond = 100f; // 초당 Content 높이 (비율)
     [SerializeField] 
     private float scrollSpeed = 100f; // 스크롤 속도 조절
+    [SerializeField] 
+    private GameObject notePrefab; // ➡️ 노트 프리팹 추가
+    private GameObject movingNote; // ➡️ 커서를 따라다니는 노트
+    private bool isPlacingNote = false; // ➡️ 노트 배치 중인지 여부
+    private List<RectTransform> smallBars = new List<RectTransform>();
+
+    // ➡️ 노트 저장용 리스트 및 가로 라인 수 추가
+    private List<GameObject> notes = new List<GameObject>();
+    private int numberOfLines = 4; // 가로 4줄
+
+    // ➡️ 노트가 배치될 X 좌표 설정
+    private float[] lineXPositions = { -75f, -25f, 25f, 75f };
+
     private int musicLengthMs; // 음악 길이 (밀리초)
     private bool isPlaying = false; // 음악 재생 상태
     private float tickTime; // 틱타임 (초 단위)
     private int pausedTimeMs = 0;
     private Vector2 lastScrollPosition; // 마지막 스크롤 위치 저장
+    private List<GameObject> twelveLines = new List<GameObject>();
+    private List<GameObject> sixteenLines = new List<GameObject>();
     
     
     private void Start()
@@ -111,34 +127,104 @@ public class MusicManager : MonoBehaviour
     }
 
     private void GenerateBars()
+{
+    float tickTimeMs = (60f / bpm) * 1000f;
+    int totalTicks = Mathf.CeilToInt(content.rect.height / heightPerTick);
+    float startY = 0f;
+
+    // 기존에 생성된 모든 바와 작은 라인 삭제
+    foreach (Transform child in content)
     {
-        float tickTimeMs = (60f / bpm) * 1000f;
-        int totalTicks = Mathf.CeilToInt(content.rect.height / heightPerTick);
-        float startY = -(content.rect.height / 2);
+        Destroy(child.gameObject);
+    }
+    twelveLines.Clear();
+    sixteenLines.Clear();
+    smallBars.Clear();
 
-        foreach (Transform child in content)
+    // 바 및 작은 라인 생성
+    for (int i = 0; i < totalTicks; i++)
+    {
+        float barPositionY = startY + (i * heightPerTick);
+        GameObject bar = Instantiate(barPrefab, content);
+        RectTransform barRect = bar.GetComponent<RectTransform>();
+        barRect.anchoredPosition = new Vector2(0, barPositionY);
+        barRect.localScale = Vector3.one;
+
+        // 12분할 라인 생성 및 비활성화
+        for (int j = 1; j <= 12; j++)
         {
-            Destroy(child.gameObject); // 기존 라인 삭제
+            GameObject smallLine = Instantiate(smallLinePrefab, content);
+            RectTransform smallLineRect = smallLine.GetComponent<RectTransform>();
+            float smallLineY = barPositionY + (j / 12f) * heightPerTick;
+            smallLineRect.anchoredPosition = new Vector2(0, smallLineY);
+            smallLineRect.localScale = Vector3.one;
+            smallLine.SetActive(currentMode == Mode.Twelve); // 초기화할 때 현재 모드에 해당하면 활성화
+            twelveLines.Add(smallLine);
         }
 
-        for (int i = 0; i < totalTicks; i++)
+        // 16분할 라인 생성 및 비활성화
+        for (int j = 1; j <= 16; j++)
         {
-            float barPositionY = startY + (i * heightPerTick);
-            GameObject bar = Instantiate(barPrefab, content);
-            RectTransform barRect = bar.GetComponent<RectTransform>();
-            barRect.anchoredPosition = new Vector2(0, barPositionY);
-            barRect.localScale = Vector3.one;
-
-            int subdivisions = (currentMode == Mode.Twelve) ? 12 : 16;
-            for (int j = 1; j <= subdivisions; j++)
-            {
-                GameObject smallLine = Instantiate(smallLinePrefab, content);
-                RectTransform smallLineRect = smallLine.GetComponent<RectTransform>();
-                float smallLineY = barPositionY + (j / (float)subdivisions) * heightPerTick;
-                smallLineRect.anchoredPosition = new Vector2(0, smallLineY);
-                smallLineRect.localScale = Vector3.one;
-            }
+            GameObject smallLine = Instantiate(smallLinePrefab, content);
+            RectTransform smallLineRect = smallLine.GetComponent<RectTransform>();
+            float smallLineY = barPositionY + (j / 16f) * heightPerTick;
+            smallLineRect.anchoredPosition = new Vector2(0, smallLineY);
+            smallLineRect.localScale = Vector3.one;
+            smallLine.SetActive(currentMode == Mode.Sixteen); // 초기화할 때 현재 모드에 해당하면 활성화
+            sixteenLines.Add(smallLine);
         }
+    }
+}
+    private void OnSmallLineClicked(RectTransform lineRect, int lineIndex)
+{
+    // 배치할 X, Y 좌표 계산
+    Vector2 notePosition = new Vector2(lineXPositions[lineIndex], lineRect.anchoredPosition.y);
+
+    // 이미 해당 위치에 노트가 있는지 확인
+    GameObject existingNote = notes.Find(note => note.GetComponent<RectTransform>().anchoredPosition == notePosition);
+
+    if (existingNote != null)
+    {
+        // ➡️ 노트가 이미 있으면 삭제
+        notes.Remove(existingNote);
+        Destroy(existingNote);
+    }
+    else
+    {
+        // ➡️ 노트가 없으면 생성
+        GameObject note = Instantiate(notePrefab, content);
+        RectTransform noteRect = note.GetComponent<RectTransform>();
+        noteRect.anchoredPosition = notePosition;
+        noteRect.localScale = Vector3.one;
+        notes.Add(note);
+    }
+}
+
+    private void UpdateBarsVisibility()
+    {
+        // 12분할 활성화 / 비활성화
+        foreach (var line in twelveLines)
+        {
+            line.SetActive(currentMode == Mode.Twelve);
+        }
+
+        // 16분할 활성화 / 비활성화
+        foreach (var line in sixteenLines)
+        {
+            line.SetActive(currentMode == Mode.Sixteen);
+        }
+    }
+
+    public void SetMode12()
+    {
+        currentMode = Mode.Twelve;
+        UpdateBarsVisibility();
+    }
+
+    public void SetMode16()
+    {
+        currentMode = Mode.Sixteen;
+        UpdateBarsVisibility();
     }
 
     private void Update()
@@ -152,6 +238,48 @@ public class MusicManager : MonoBehaviour
     {
         // ⏸️ 일시정지 중 사용자가 스크롤을 조작하면 재생 시간 변경
         UpdateTimeFromScroll();
+    }
+    // 🔥 노트 배치 중일 때 마우스를 따라다니기
+    if (isPlacingNote && movingNote != null)
+    {
+        Vector2 mousePosition = Input.mousePosition;
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(content, mousePosition, null, out localPoint);
+
+        // ➡️ 가로로 4개 라인 중 가장 가까운 라인에 스냅
+        float closestX = lineXPositions[0];
+        float minXDistance = Mathf.Abs(localPoint.x - lineXPositions[0]);
+
+        for (int i = 1; i < lineXPositions.Length; i++)
+        {
+            float distance = Mathf.Abs(localPoint.x - lineXPositions[i]);
+            if (distance < minXDistance)
+            {
+                minXDistance = distance;
+                closestX = lineXPositions[i];
+            }
+        }
+
+        // ➡️ Y 좌표는 마우스 위치 그대로
+        movingNote.GetComponent<RectTransform>().anchoredPosition = new Vector2(closestX, localPoint.y);
+    }
+
+    // 🔥 마우스 클릭 시 노트 고정 및 새로운 노트 생성
+    if (Input.GetMouseButtonDown(0))
+    {
+        if (isPlacingNote)
+        {
+            // ➡️ 현재 노트 고정
+            movingNote = null;
+            isPlacingNote = false;
+        }
+        else
+        {
+            // ➡️ 새로운 노트 생성 및 커서 따라다니기 시작
+            movingNote = Instantiate(notePrefab, content);
+            movingNote.GetComponent<RectTransform>().localScale = Vector3.one;
+            isPlacingNote = true;
+        }
     }
 }
 
@@ -247,18 +375,6 @@ public void PauseSound()
     // UI의 재생 시간도 00:00:000으로 초기화
     timeText.text = FormatTime(0);
 }
-
-    public void SetMode12()
-    {
-        currentMode = Mode.Twelve;
-        GenerateBars();
-    }
-
-    public void SetMode16()
-    {
-        currentMode = Mode.Sixteen;
-        GenerateBars();
-    }
 
 
     private void OnDestroy()
