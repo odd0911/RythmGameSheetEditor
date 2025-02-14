@@ -15,7 +15,7 @@ public class MusicManager : MonoBehaviour
     [SerializeField]
     private EventReference fmodEvent;
     private EventInstance soundInstance;
-    private string fmodEventPath = "event:/music_test1"; // FMOD 이벤트 경로
+    public string fmodEventPath; // FMOD 이벤트 경로
 
     [SerializeField]
     private RectTransform content; // Scroll View의 Content RectTransform
@@ -256,6 +256,16 @@ private void SnapNoteToClosestPoint()
     RectTransform noteRect = movingNote.GetComponent<RectTransform>();
     Vector2 notePosition = noteRect.anchoredPosition;
 
+    // ➡️ 노트의 x좌표가 제한 범위를 벗어났는지 확인
+    if (notePosition.x >= 100f || notePosition.x <= -100f)
+    {
+        // 제한 범위를 벗어나면 노트 배치 취소
+        Destroy(movingNote);
+        movingNote = null;
+        isPlacingNote = false;
+        return;
+    }
+
     // ➡️ 가장 가까운 가로 라인 찾기
     float closestX = lineXPositions[0];
     float minXDistance = Mathf.Abs(notePosition.x - lineXPositions[0]);
@@ -333,7 +343,7 @@ private void UpdateTimeFromScroll()
             pausedTimeMs = Mathf.Clamp(pausedTimeMs, 0, musicLengthMs); // 범위 제한
 
             // 변경된 시간에 맞춰 Content 위치 조정
-            float newYPosition = -(pausedTimeMs / 1000f) * heightPerSecond;
+            float newYPosition = -(pausedTimeMs / 600f) * heightPerSecond;
             content.anchoredPosition = new Vector2(content.anchoredPosition.x, newYPosition);
 
             // UI에 업데이트된 시간 표시

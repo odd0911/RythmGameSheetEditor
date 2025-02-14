@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{3f9a4558-8ba6-4db8-907a-cb2f8cab4b26}">
+		<property name="assetPath">
+			<value>ブルーアーカイブ Blue Archive OST 174. Tok9 Train.mp3</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>113.89387755102041</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{f9898dd6-4993-4e69-a74b-2ccc6c5cde41}</destination>
+		</relationship>
+	</object>
+</objects>

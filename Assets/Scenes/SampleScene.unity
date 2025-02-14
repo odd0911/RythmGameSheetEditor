@@ -676,11 +676,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fmodEvent:
     Guid:
-      Data1: 0
-      Data2: 0
-      Data3: 0
-      Data4: 0
-    Path: 
+      Data1: -1008485532
+      Data2: 1203442302
+      Data3: -1312188527
+      Data4: 1672907535
+    Path: event:/music_test1
+  fmodEventPath: event:/music_test1
   content: {fileID: 1155464485}
   barPrefab: {fileID: 5891399655867536749, guid: b13bb8b04c0dc1d459ff3104aa3f2e0b, type: 3}
   smallLinePrefab: {fileID: 3972775716534157643, guid: 7dce9abfb92bd5e4f8d8b6ea3742c46f, type: 3}

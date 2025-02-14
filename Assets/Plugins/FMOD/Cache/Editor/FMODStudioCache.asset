@@ -19,7 +19,7 @@ MonoBehaviour:
     Data3: -596913776
     Data4: -896380642
   Banks:
-  - {fileID: -5293109654565999773}
+  - {fileID: 1947010564588559459}
   IsStream: 1
   Is3D: 0
   IsOneShot: 1
@@ -27,7 +27,7 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 113893
---- !u!114 &-5293109654565999773
+--- !u!114 &-6923545662238580165
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -37,15 +37,35 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
-  m_Name: bank:/Bank A.bank
+  m_Name: bank:/Master.bank
   m_EditorClassIdentifier: 
-  Path: ../DJmax_respect_B/Respect_B_gamemusic/Build/Desktop/Bank A.bank
-  Name: Bank A
-  StudioPath: bank:/Bank A
-  lastModified: 638739929663713263
+  Path: Assets/Resources/FMOD/Respect_B_gamemusic/Build/Desktop/Master.bank
+  Name: Master
+  StudioPath: bank:/Master
+  lastModified: 638725287748545719
   FileSizes:
   - Name: Desktop
-    Value: 5020928
+    Value: 1036
+  Exists: 1
+--- !u!114 &-4901571196154179346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/gamemusic.bank
+  m_EditorClassIdentifier: 
+  Path: Assets/Resources/FMOD/Respect_B_gamemusic/Build/Desktop/gamemusic.bank
+  Name: gamemusic
+  StudioPath: bank:/gamemusic
+  lastModified: 638699604602252240
+  FileSizes:
+  - Name: Desktop
+    Value: 494
   Exists: 1
 --- !u!114 &-4235894201320895585
 MonoBehaviour:
@@ -66,7 +86,7 @@ MonoBehaviour:
     Data3: 2015815605
     Data4: 25389546
   Banks:
-  - {fileID: -5293109654565999773}
+  - {fileID: 1947010564588559459}
   IsStream: 1
   Is3D: 0
   IsOneShot: 1
@@ -74,26 +94,6 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 133093
---- !u!114 &-3668938146076316576
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
-  m_Name: bank:/gamemusic.bank
-  m_EditorClassIdentifier: 
-  Path: ../DJmax_respect_B/Respect_B_gamemusic/Build/Desktop/gamemusic.bank
-  Name: gamemusic
-  StudioPath: bank:/gamemusic
-  lastModified: 638699604602252240
-  FileSizes:
-  - Name: Desktop
-    Value: 494
-  Exists: 1
 --- !u!114 &-3104638971092366712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -113,7 +113,7 @@ MonoBehaviour:
     Data3: 1288855706
     Data4: 152633216
   Banks:
-  - {fileID: -5293109654565999773}
+  - {fileID: 1947010564588559459}
   IsStream: 0
   Is3D: 0
   IsOneShot: 1
@@ -121,26 +121,6 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 0
---- !u!114 &-1998261503565172832
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
-  m_Name: bank:/Master.strings.bank
-  m_EditorClassIdentifier: 
-  Path: ../DJmax_respect_B/Respect_B_gamemusic/Build/Desktop/Master.strings.bank
-  Name: Master.strings
-  StudioPath: bank:/Master.strings
-  lastModified: 638725287748583670
-  FileSizes:
-  - Name: Desktop
-    Value: 986
-  Exists: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,10 +134,10 @@ MonoBehaviour:
   m_Name: FMODStudioCache
   m_EditorClassIdentifier: 
   EditorBanks:
-  - {fileID: -1998261503565172832}
-  - {fileID: -5293109654565999773}
-  - {fileID: -3668938146076316576}
-  - {fileID: 8409204778075766602}
+  - {fileID: 5862826468251705591}
+  - {fileID: 1947010564588559459}
+  - {fileID: -4901571196154179346}
+  - {fileID: -6923545662238580165}
   EditorEvents:
   - {fileID: -8484098147383365370}
   - {fileID: 4653403232541377558}
@@ -165,11 +145,31 @@ MonoBehaviour:
   - {fileID: -3104638971092366712}
   EditorParameters: []
   MasterBanks:
-  - {fileID: 8409204778075766602}
+  - {fileID: -6923545662238580165}
   StringsBanks:
-  - {fileID: -1998261503565172832}
-  cacheTime: 638739929663713263
+  - {fileID: 5862826468251705591}
+  cacheTime: 638739926491525814
   cacheVersion: 131622
+--- !u!114 &1947010564588559459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Bank A.bank
+  m_EditorClassIdentifier: 
+  Path: Assets/Resources/FMOD/Respect_B_gamemusic/Build/Desktop/Bank A.bank
+  Name: Bank A
+  StudioPath: bank:/Bank A
+  lastModified: 638739926491525814
+  FileSizes:
+  - Name: Desktop
+    Value: 5020928
+  Exists: 1
 --- !u!114 &4653403232541377558
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,7 +189,7 @@ MonoBehaviour:
     Data3: -1312188527
     Data4: 1672907535
   Banks:
-  - {fileID: -5293109654565999773}
+  - {fileID: 1947010564588559459}
   IsStream: 1
   Is3D: 0
   IsOneShot: 1
@@ -197,7 +197,7 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 139859
---- !u!114 &8409204778075766602
+--- !u!114 &5862826468251705591
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -207,13 +207,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
-  m_Name: bank:/Master.bank
+  m_Name: bank:/Master.strings.bank
   m_EditorClassIdentifier: 
-  Path: ../DJmax_respect_B/Respect_B_gamemusic/Build/Desktop/Master.bank
-  Name: Master
-  StudioPath: bank:/Master
-  lastModified: 638725287748545719
+  Path: Assets/Resources/FMOD/Respect_B_gamemusic/Build/Desktop/Master.strings.bank
+  Name: Master.strings
+  StudioPath: bank:/Master.strings
+  lastModified: 638725287748583670
   FileSizes:
   - Name: Desktop
-    Value: 1036
+    Value: 986
   Exists: 1

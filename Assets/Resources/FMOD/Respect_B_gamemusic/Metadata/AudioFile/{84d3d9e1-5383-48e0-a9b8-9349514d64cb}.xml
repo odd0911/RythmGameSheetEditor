@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{84d3d9e1-5383-48e0-a9b8-9349514d64cb}">
+		<property name="assetPath">
+			<value>ブルーアーカイブ Blue Archive OST 175. HIGH-VELOCITY (とある科学の青春記録 Event BGM).mp3</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>133.0938775510204</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{f9898dd6-4993-4e69-a74b-2ccc6c5cde41}</destination>
+		</relationship>
+	</object>
+</objects>
