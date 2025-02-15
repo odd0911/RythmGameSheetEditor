@@ -11,6 +11,8 @@ public class MusicManager : MonoBehaviour
 
     private enum Mode { Twelve, Sixteen }
     private Mode currentMode = Mode.Sixteen; // 기본 모드: 16분할
+    public Button shortNoteButton;
+    public Button longNoteButton;
 
     [SerializeField]
     private EventReference fmodEvent;
@@ -46,6 +48,7 @@ public class MusicManager : MonoBehaviour
     private float scrollSpeed = 100f; // 스크롤 속도 조절
     [SerializeField] 
     private GameObject notePrefab; // ➡️ 노트 프리팹 추가
+    public GameObject longNotePrefab;
     private GameObject movingNote; // ➡️ 커서를 따라다니는 노트
     private bool isPlacingNote = false; // ➡️ 노트 배치 중인지 여부
     private List<RectTransform> smallBars = new List<RectTransform>();
@@ -64,6 +67,9 @@ public class MusicManager : MonoBehaviour
     private Vector2 lastScrollPosition; // 마지막 스크롤 위치 저장
     private List<GameObject> twelveLines = new List<GameObject>();
     private List<GameObject> sixteenLines = new List<GameObject>();
+    private bool isLongNoteMode = false;
+    private bool isSettingLongNoteEnd = false;
+    private Vector2 longNoteStartPos;
     
     
     private void Start()
@@ -219,67 +225,134 @@ public class MusicManager : MonoBehaviour
         // ⏸️ 일시정지 중 사용자가 스크롤을 조작하면 재생 시간 변경
         UpdateTimeFromScroll();
     }
-    if (isPlacingNote && movingNote != null)
+    if (movingNote != null)
+        {
+            Vector2 mousePosition = Input.mousePosition;
+            Vector2 localPoint;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(content, mousePosition, null, out localPoint);
+
+            // ➡️ 마우스 위치 그대로 따라다니기
+            movingNote.GetComponent<RectTransform>().anchoredPosition = localPoint;
+        }
+
+        // 마우스 클릭 처리
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (isLongNoteMode)
+            {
+                if (!isSettingLongNoteEnd)
+                {
+                    // ➡️ 롱노트 시작점 고정
+                    SnapLongNoteStartToClosestPoint();
+                    isSettingLongNoteEnd = true;
+                }
+                else
+                {
+                    // ➡️ 롱노트 끝점 고정 및 가장 가까운 작은바에 스냅
+                    SnapLongNoteToClosestPoint();
+                    movingNote = null;
+                    isPlacingNote = false;
+                    isSettingLongNoteEnd = false;
+
+                    // ➡️ 다음 노트 미리 생성
+                    CreateFollowingNote();
+                }
+            }
+            else
+            {
+                // ➡️ 숏노트 모드 ➡️ 가장 가까운 작은바에 스냅 후 고정
+                SnapNoteToClosestPoint();
+                movingNote = null;
+                isPlacingNote = false;
+
+                // ➡️ 다음 노트 미리 생성
+                CreateFollowingNote();
+            }
+        }
+        if (Input.GetMouseButtonDown(1))
     {
         Vector2 mousePosition = Input.mousePosition;
         Vector2 localPoint;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(content, mousePosition, null, out localPoint);
 
-        // ➡️ 마우스 위치 그대로 따라가기
-        movingNote.GetComponent<RectTransform>().anchoredPosition = localPoint;
+        float closestX = localPoint.x;
+        float closestY = localPoint.y;
+        float minXDistance = float.MaxValue;
+        float minYDistance = float.MaxValue;
+
+        // ➡️ 가장 가까운 X 좌표 찾기
+        for (int i = 0; i < lineXPositions.Length; i++)
+        {
+            float distance = Mathf.Abs(localPoint.x - lineXPositions[i]);
+            if (distance < minXDistance)
+            {
+                minXDistance = distance;
+                closestX = lineXPositions[i];
+            }
+        }
+
+        // ➡️ 가장 가까운 작은바 Y 좌표 찾기
+        foreach (RectTransform smallBar in smallBars)
+        {
+            float distance = Mathf.Abs(localPoint.y - smallBar.anchoredPosition.y);
+            if (distance < minYDistance)
+            {
+                minYDistance = distance;
+                closestY = smallBar.anchoredPosition.y;
+            }
+        }
+
+        // ➡️ 해당 위치에 있는 노트 찾기 및 삭제
+        foreach (Transform child in content)
+        {
+            RectTransform childRect = child.GetComponent<RectTransform>();
+            if (childRect != null)
+            {
+                float xDistance = Mathf.Abs(childRect.anchoredPosition.x - closestX);
+                float yDistance = Mathf.Abs(childRect.anchoredPosition.y - closestY);
+
+                // 🔥 X, Y 좌표가 거의 같으면 삭제
+                if (xDistance < 5f && yDistance < 5f)
+                {
+                    Destroy(child.gameObject);
+                    isPlacingNote = true;
+
+                    break;
+                }
+            }
+        }
+    }
     }
 
-    // 🔥 마우스 클릭 시 가장 가까운 스냅 포인트에 붙이기
-    if (Input.GetMouseButtonDown(0))
+    private void CreateFollowingNote()
     {
-        if (isPlacingNote)
+        if (isLongNoteMode)
         {
-            // ➡️ 현재 노트 고정
-            SnapNoteToClosestPoint();
-            movingNote = null;
-            isPlacingNote = false;
+            movingNote = Instantiate(longNotePrefab, content);
         }
         else
         {
-            // ➡️ 새로운 노트 생성 및 커서 따라다니기 시작
             movingNote = Instantiate(notePrefab, content);
-            movingNote.GetComponent<RectTransform>().localScale = Vector3.one;
-            isPlacingNote = true;
         }
+        movingNote.GetComponent<RectTransform>().localScale = Vector3.one;
+        isPlacingNote = true;
     }
-}
 
-private void SnapNoteToClosestPoint()
+    private void SnapLongNoteStartToClosestPoint()
 {
     if (movingNote == null) return;
 
     RectTransform noteRect = movingNote.GetComponent<RectTransform>();
     Vector2 notePosition = noteRect.anchoredPosition;
 
-    // ➡️ 노트의 x좌표가 제한 범위를 벗어났는지 확인
-    if (notePosition.x >= 100f || notePosition.x <= -100f)
+    // ➡️ X좌표 범위 확인
+    if (notePosition.x > 100 || notePosition.x < -100)
     {
-        // 제한 범위를 벗어나면 노트 배치 취소
         Destroy(movingNote);
-        movingNote = null;
-        isPlacingNote = false;
         return;
     }
 
-    // ➡️ 가장 가까운 가로 라인 찾기
-    float closestX = lineXPositions[0];
-    float minXDistance = Mathf.Abs(notePosition.x - lineXPositions[0]);
-    for (int i = 1; i < lineXPositions.Length; i++)
-    {
-        float distance = Mathf.Abs(notePosition.x - lineXPositions[i]);
-        if (distance < minXDistance)
-        {
-            minXDistance = distance;
-            closestX = lineXPositions[i];
-        }
-    }
-
-    // ➡️ 가장 가까운 작은 바 찾기
+    // ➡️ 시작점을 가장 가까운 작은바에 스냅
     float closestY = notePosition.y;
     float minYDistance = float.MaxValue;
 
@@ -293,41 +366,153 @@ private void SnapNoteToClosestPoint()
         }
     }
 
-    // ➡️ 노트 위치 업데이트
-    noteRect.anchoredPosition = new Vector2(closestX, closestY);
+    // ➡️ 가장 가까운 스냅 포인트로 이동
+    noteRect.anchoredPosition = new Vector2(notePosition.x, closestY);
 
-    // ➡️ 기존 노트와 겹치는지 확인
-    for (int i = 0; i < notes.Count; i++)
+    // ➡️ 시작점 고정
+    longNoteStartPos = noteRect.anchoredPosition;
+}
+
+    private void SnapNoteToClosestPoint()
     {
-        GameObject existingNote = notes[i];
+        if (movingNote == null) return;
 
-        // 삭제된 노트는 건너뛰기
-        if (existingNote == null)
+        RectTransform noteRect = movingNote.GetComponent<RectTransform>();
+        Vector2 notePosition = noteRect.anchoredPosition;
+
+        // ➡️ X좌표 범위 확인
+        if (notePosition.x > 100 || notePosition.x < -100)
         {
-            notes.RemoveAt(i);
-            i--; // 리스트에서 제거된 인덱스를 보정
-            continue;
+            Destroy(movingNote);
+            return;
         }
 
-        RectTransform existingNoteRect = existingNote.GetComponent<RectTransform>();
-        // 두 노트의 위치가 거의 같으면 겹친 것으로 간주
-        if (Vector2.Distance(existingNoteRect.anchoredPosition, noteRect.anchoredPosition) < 10f) // 10f는 겹침 판별 거리 (조정 가능)
+        float closestX = lineXPositions[0];
+    float minXDistance = Mathf.Abs(notePosition.x - lineXPositions[0]);
+    for (int i = 1; i < lineXPositions.Length; i++)
+    {
+        float distance = Mathf.Abs(notePosition.x - lineXPositions[i]);
+        if (distance < minXDistance)
         {
-            // 겹치는 두 노트 삭제
-            Destroy(existingNote); // 기존 노트 삭제
-            notes.RemoveAt(i); // 리스트에서 기존 노트 제거
-            i--; // 리스트에서 제거된 인덱스를 보정
-
-            Destroy(movingNote); // 새로 배치하려는 노트 삭제
-            movingNote = null; // 참조를 null로 설정
-
-            return; // 더 이상 노트를 배치하지 않음
+            minXDistance = distance;
+            closestX = lineXPositions[i];
         }
     }
 
-    // ➡️ 겹치지 않으면 노트 저장
-    notes.Add(movingNote);
+        // ➡️ 가장 가까운 작은 바 찾기
+        float closestY = notePosition.y;
+        float minYDistance = float.MaxValue;
+
+        foreach (RectTransform smallBar in smallBars)
+        {
+            float distance = Mathf.Abs(notePosition.y - smallBar.anchoredPosition.y);
+            if (distance < minYDistance)
+            {
+                minYDistance = distance;
+                closestY = smallBar.anchoredPosition.y;
+            }
+        }
+
+        if (IsOverlappingWithExistingNotes(closestX, closestY))
+    {
+        Destroy(movingNote);
+        movingNote = null;
+        isPlacingNote = false;
+        return;
+    }
+
+        // ➡️ 가장 가까운 스냅 포인트로 이동
+        noteRect.anchoredPosition = new Vector2(closestX, closestY);
+    }
+
+private void SnapLongNoteToClosestPoint()
+    {
+        if (movingNote == null) return;
+
+        RectTransform noteRect = movingNote.GetComponent<RectTransform>();
+        Vector2 notePosition = noteRect.anchoredPosition;
+        Vector2 size = noteRect.sizeDelta;
+
+        // ➡️ X좌표 범위 확인
+        if (notePosition.x > 100 || notePosition.x < -100)
+        {
+            Destroy(movingNote);
+            return;
+        }
+
+        float closestX = lineXPositions[0];
+    float minXDistance = Mathf.Abs(notePosition.x - lineXPositions[0]);
+    for (int i = 1; i < lineXPositions.Length; i++)
+    {
+        float distance = Mathf.Abs(notePosition.x - lineXPositions[i]);
+        if (distance < minXDistance)
+        {
+            minXDistance = distance;
+            closestX = lineXPositions[i];
+        }
+    }
+
+        // ➡️ 가장 가까운 작은 바 찾기 (끝지점 기준)
+        float closestY = notePosition.y;
+        float minYDistance = float.MaxValue;
+
+        foreach (RectTransform smallBar in smallBars)
+        {
+            float distance = Mathf.Abs(notePosition.y - smallBar.anchoredPosition.y);
+            if (distance < minYDistance)
+            {
+                minYDistance = distance;
+                closestY = smallBar.anchoredPosition.y;
+            }
+        }
+
+        // ➡️ 시작점과 끝점 계산 후 스냅
+        float startY = longNoteStartPos.y;
+        float endY = closestY;
+        float length = Mathf.Abs(startY - endY);
+        Vector2 midPoint = new Vector2(closestX, startY);
+
+        noteRect.anchoredPosition = midPoint;
+        noteRect.sizeDelta = new Vector2(noteRect.sizeDelta.x, length);
+    }
+
+    private bool IsOverlappingWithExistingNotes(float x, float y)
+{
+    foreach (Transform child in content)
+    {
+        RectTransform childRect = child.GetComponent<RectTransform>();
+        if (childRect != null)
+        {
+            Vector2 childPos = childRect.anchoredPosition;
+            // ➡️ 같은 위치에 이미 노트가 있다면 겹침으로 판단
+            if (Mathf.Abs(childPos.x - x) < 1f && Mathf.Abs(childPos.y - y) < 1f)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
+
+    public void SetShortNoteMode()
+    {
+        isLongNoteMode = false;
+        if (movingNote != null)
+        {
+            Destroy(movingNote);
+        }
+        CreateFollowingNote();
+    }
+
+    public void SetLongNoteMode()
+    {
+        isLongNoteMode = true;
+        if (movingNote != null)
+        {
+            Destroy(movingNote);
+        }
+        CreateFollowingNote();
+    }
 
 // 스크롤 위치를 기반으로 재생 시간을 변경하는 함수
 private void UpdateTimeFromScroll()

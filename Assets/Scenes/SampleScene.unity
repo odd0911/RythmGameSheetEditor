@@ -201,7 +201,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1185646}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 319602339}
+        m_TargetAssemblyTypeName: MusicManager, Assembly-CSharp
+        m_MethodName: SetShortNoteMode
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1185646
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -674,6 +686,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2811cb18c58ea45a0b2563d9eff3aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  shortNoteButton: {fileID: 1185645}
+  longNoteButton: {fileID: 1493756873}
   fmodEvent:
     Guid:
       Data1: -1008485532
@@ -693,6 +707,7 @@ MonoBehaviour:
   heightPerSecond: 300
   scrollSpeed: 100
   notePrefab: {fileID: 1534138378787427512, guid: 4b9a1aef2a0ec714f92e7d7e2d8f85e1, type: 3}
+  longNotePrefab: {fileID: 1534138378787427512, guid: 4b9a1aef2a0ec714f92e7d7e2d8f85e1, type: 3}
 --- !u!4 &319602340
 Transform:
   m_ObjectHideFlags: 0
@@ -2211,7 +2226,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1493756874}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 319602339}
+        m_TargetAssemblyTypeName: MusicManager, Assembly-CSharp
+        m_MethodName: SetLongNoteMode
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1493756874
 MonoBehaviour:
   m_ObjectHideFlags: 0
