@@ -28,9 +28,9 @@ public class MusicManager : MonoBehaviour
     private GameObject smallLinePrefab; // 작은 라인 프리팹
 
     [SerializeField]
-    public List<GameObject> allNotes; // 모든 노트를 담을 리스트
-    public float longNoteHeightThreshold = 100f; // 롱노트를 판별하는 높이 기준
-    public string title = "Summer Attack!";
+    private List<GameObject> allNotes; // 모든 노트를 담을 리스트
+    private float longNoteHeightThreshold = 100f; // 롱노트를 판별하는 높이 기준
+    private string title = "Usagi_Flap";
     public float offset = 0f; // Offset 값
     private float bpm = 170f; // BPM 값
     List<string> noteData = new List<string>();
@@ -219,12 +219,28 @@ public class MusicManager : MonoBehaviour
         // ➡️ 저장된 txt 파일 경로
         string path = Application.persistentDataPath + $"/sheets/{title}.txt";
 
-        // ➡️ 파일이 존재하는지 확인
-        if (!File.Exists(path))
+        // ➡️ 파일이 없으면 기본 파일 생성
+    if (!File.Exists(path))
+    {
+        Debug.LogWarning("노트 시트 파일이 없어 기본 파일을 생성합니다.");
+
+        // ➡️ 기본 노트 시트 내용 작성
+        List<string> Usagi_Flap = new List<string>
         {
-            Debug.LogError("노트 시트 파일을 찾을 수 없습니다: " + path);
-            return;
-        }
+            "[Description]",
+            $"Title: {title}",
+            "",
+            "[Audio]",
+            "BPM: 170",
+            "Offset: 0",
+            "",
+            "[Note]"
+        };
+
+        // ➡️ txt 파일로 저장
+        File.WriteAllLines(path, Usagi_Flap);
+        Debug.Log($"기본 노트 시트를 생성했습니다: {path}");
+    }
 
         // ➡️ txt 파일 읽기
         string[] lines = File.ReadAllLines(path);
