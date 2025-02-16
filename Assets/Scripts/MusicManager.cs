@@ -4,6 +4,7 @@ using FMODUnity;
 using TMPro; // TextMeshPro 네임스페이스
 using FMOD.Studio;
 using System.Collections.Generic;
+using System.IO;
 
 public class MusicManager : MonoBehaviour
 {
@@ -11,11 +12,9 @@ public class MusicManager : MonoBehaviour
 
     private enum Mode { Twelve, Sixteen }
     private Mode currentMode = Mode.Sixteen; // 기본 모드: 16분할
-    public Button shortNoteButton;
-    public Button longNoteButton;
+
 
     [SerializeField]
-    private EventReference fmodEvent;
     private EventInstance soundInstance;
     public string fmodEventPath; // FMOD 이벤트 경로
 
@@ -29,7 +28,12 @@ public class MusicManager : MonoBehaviour
     private GameObject smallLinePrefab; // 작은 라인 프리팹
 
     [SerializeField]
+    public List<GameObject> allNotes; // 모든 노트를 담을 리스트
+    public float longNoteHeightThreshold = 100f; // 롱노트를 판별하는 높이 기준
+    public string title = "Summer Attack!";
+    public float offset = 0f; // Offset 값
     private float bpm = 170f; // BPM 값
+    List<string> noteData = new List<string>();
 
     [SerializeField]
     private float heightPerTick = 50f; // 틱당 높이 (픽셀)
@@ -53,10 +57,6 @@ public class MusicManager : MonoBehaviour
     private bool isPlacingNote = false; // ➡️ 노트 배치 중인지 여부
     private List<RectTransform> smallBars = new List<RectTransform>();
 
-    // ➡️ 노트 저장용 리스트 및 가로 라인 수 추가
-    private List<GameObject> notes = new List<GameObject>();
-    private int numberOfLines = 4; // 가로 4줄
-
     // ➡️ 노트가 배치될 X 좌표 설정
     private float[] lineXPositions = { -75f, -25f, 25f, 75f };
 
@@ -64,7 +64,6 @@ public class MusicManager : MonoBehaviour
     private bool isPlaying = false; // 음악 재생 상태
     private float tickTime; // 틱타임 (초 단위)
     private int pausedTimeMs = 0;
-    private Vector2 lastScrollPosition; // 마지막 스크롤 위치 저장
     private List<GameObject> twelveLines = new List<GameObject>();
     private List<GameObject> sixteenLines = new List<GameObject>();
     private bool isLongNoteMode = false;
@@ -86,6 +85,8 @@ public class MusicManager : MonoBehaviour
         // 버튼 이벤트 연결
         button12.onClick.AddListener(SetMode12);
         button16.onClick.AddListener(SetMode16);
+        LoadNoteSheet();
+        PlaceSheetNotes();
     }
 
 
@@ -213,6 +214,90 @@ public class MusicManager : MonoBehaviour
         UpdateBarsVisibility();
     }
 
+    void LoadNoteSheet()
+    {
+        // ➡️ 저장된 txt 파일 경로
+        string path = Application.persistentDataPath + $"/sheets/{title}.txt";
+
+        // ➡️ 파일이 존재하는지 확인
+        if (!File.Exists(path))
+        {
+            Debug.LogError("노트 시트 파일을 찾을 수 없습니다: " + path);
+            return;
+        }
+
+        // ➡️ txt 파일 읽기
+        string[] lines = File.ReadAllLines(path);
+
+        // ➡️ 데이터 파싱
+        bool isNoteSection = false;
+        foreach (string line in lines)
+        {
+            if (line.StartsWith("Title:"))
+            {
+                title = line.Replace("Title:", "").Trim();
+            }
+            else if (line.StartsWith("BPM:"))
+            {
+                bpm = int.Parse(line.Replace("BPM:", "").Trim());
+            }
+            else if (line.StartsWith("Offset:"))
+            {
+                offset = int.Parse(line.Replace("Offset:", "").Trim());
+            }
+            else if (line.StartsWith("[Note]"))
+            {
+                isNoteSection = true;
+            }
+            else if (isNoteSection && !string.IsNullOrWhiteSpace(line))
+            {
+                noteData.Add(line.Trim());
+            }
+        }
+
+        Debug.Log($"노트 시트 불러오기 완료! Title: {title}, BPM: {bpm}, Offset: {offset}");
+    }
+
+    void PlaceSheetNotes()
+    {
+        foreach (string note in noteData)
+        {
+            string[] parts = note.Split(',');
+
+            float time = float.Parse(parts[0].Trim());
+            int type = int.Parse(parts[1].Trim());
+            int lane = int.Parse(parts[2].Trim());
+
+            float xPos = 0;
+            if (lane == 1) xPos = -75;
+            else if (lane == 2) xPos = -25;
+            else if (lane == 3) xPos = 25;
+            else if (lane == 4) xPos = 75;
+
+            float yPos = time / 600f * heightPerSecond;
+
+            if (type == 0)
+            {
+                // ➡️ 숏노트 배치
+                GameObject noteObject = Instantiate(notePrefab, content);
+                noteObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(xPos, yPos);
+            }
+            else if (type == 1)
+            {
+                // ➡️ 롱노트 배치
+                float endTime = float.Parse(parts[3].Trim());
+                float endYPos = endTime / 600f * heightPerSecond;
+
+                GameObject longNoteObject = Instantiate(longNotePrefab, content);
+                RectTransform rect = longNoteObject.GetComponent<RectTransform>();
+                rect.anchoredPosition = new Vector2(xPos, yPos);
+                rect.sizeDelta = new Vector2(rect.sizeDelta.x, endYPos - yPos);
+            }
+        }
+
+        Debug.Log("노트 배치 완료!");
+    }
+
     private void Update()
 {
     if (isPlaying)
@@ -314,6 +399,7 @@ public class MusicManager : MonoBehaviour
                 // 🔥 X, Y 좌표가 거의 같으면 삭제
                 if (xDistance < 5f && yDistance < 5f)
                 {
+                    allNotes.Remove(child.gameObject);
                     Destroy(child.gameObject);
                     isPlacingNote = true;
 
@@ -423,6 +509,7 @@ public class MusicManager : MonoBehaviour
 
         // ➡️ 가장 가까운 스냅 포인트로 이동
         noteRect.anchoredPosition = new Vector2(closestX, closestY);
+        allNotes.Add(movingNote);
     }
 
 private void SnapLongNoteToClosestPoint()
@@ -474,6 +561,7 @@ private void SnapLongNoteToClosestPoint()
 
         noteRect.anchoredPosition = midPoint;
         noteRect.sizeDelta = new Vector2(noteRect.sizeDelta.x, length);
+        allNotes.Add(movingNote);
     }
 
     private bool IsOverlappingWithExistingNotes(float x, float y)
@@ -550,6 +638,80 @@ private void UpdateTimeFromScroll()
 
         // Content 위치 설정 (아래로 이동)
         content.anchoredPosition = new Vector2(content.anchoredPosition.x, -newYPosition);
+    }
+
+    public void SaveSheet()
+    {
+        List<string> sheetData = GenerateNoteSheet();
+        // ➡️ 파일 저장 경로 설정 (Application.persistentDataPath 사용)
+        string path = Application.persistentDataPath + $"/sheets/{title}.txt";
+
+        // ➡️ txt 파일로 저장
+        File.WriteAllLines(path, sheetData);
+
+        Debug.Log("노트 시트가 txt 파일로 저장되었습니다: " + path);
+    }
+
+    // 노트 시트 생성
+    List<string> GenerateNoteSheet()
+    {
+        List<string> sheetData = new List<string>();
+
+        sheetData.Add("[Description]");
+        sheetData.Add($"Title: {title}");
+        sheetData.Add("");
+        sheetData.Add("[Audio]");
+        sheetData.Add($"BPM: {bpm}");
+        sheetData.Add($"Offset: {offset}");
+        sheetData.Add("");
+        sheetData.Add("[Note]");
+
+        List<string> notes = new List<string>();
+        List<string> longNotes = new List<string>();
+
+        foreach (GameObject note in allNotes)
+        {
+            RectTransform noteRect = note.GetComponent<RectTransform>();
+            float xPos = noteRect.anchoredPosition.x;
+            float yPos = noteRect.anchoredPosition.y;
+            float height = noteRect.rect.height;
+
+            float timeInMs = yPos / heightPerSecond * 600f ; // y좌표를 MS 단위로 환산 (100px = 1 BPM 단위 시간으로 계산)
+            float lane = 0;
+            if (xPos == -75)
+            lane = 1;
+            else if (xPos == -25)
+            lane = 2;
+            else if (xPos == 25)
+            lane = 3;
+            else if (xPos == 75)
+            lane = 4;
+
+            if (height > longNoteHeightThreshold)
+            {
+                // 롱노트 판별: 노트가 롱노트일 경우 시작과 끝점 기록
+                string longNote = $"{timeInMs}, 1, {lane}, {height / heightPerSecond * 600f}";
+                longNotes.Add(longNote);
+            }
+            else
+            {
+                // 숏노트: 시간, X좌표, 식별 번호 (숏노트는 1로 고정)
+                string shortNote = $"{timeInMs}, 0, {lane}";
+                notes.Add(shortNote);
+            }
+        }
+
+        // 숏노트와 롱노트 정보 합치기
+        notes.AddRange(longNotes);
+        notes.Sort((a, b) => float.Parse(a.Split(',')[0]).CompareTo(float.Parse(b.Split(',')[0]))); // 시간순으로 정렬
+
+        // 시트에 추가
+        foreach (string note in notes)
+        {
+            sheetData.Add(note);
+        }
+
+        return sheetData;
     }
 
     
