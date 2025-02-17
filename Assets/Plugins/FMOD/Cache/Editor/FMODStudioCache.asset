@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8484098147383365370
+--- !u!114 &-8259630572125995713
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/music_test3
+  m_Name: event:/Tok9_Train
   m_EditorClassIdentifier: 
-  Path: event:/music_test3
+  Path: event:/Tok9_Train
   Guid:
     Data1: 813128965
     Data2: 1143270348
@@ -27,6 +27,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 113893
+--- !u!114 &-7227103917941882525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Summer_Attack!
+  m_EditorClassIdentifier: 
+  Path: event:/Summer_Attack!
+  Guid:
+    Data1: -1008485532
+    Data2: 1203442302
+    Data3: -1312188527
+    Data4: 1672907535
+  Banks:
+  - {fileID: 1947010564588559459}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 139859
 --- !u!114 &-6923545662238580165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42,7 +69,7 @@ MonoBehaviour:
   Path: Assets/Resources/FMOD/Respect_B_gamemusic/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 638751802398608590
+  lastModified: 638754320971012849
   FileSizes:
   - Name: Desktop
     Value: 1036
@@ -139,17 +166,17 @@ MonoBehaviour:
   - {fileID: -4901571196154179346}
   - {fileID: -6923545662238580165}
   EditorEvents:
-  - {fileID: -8484098147383365370}
-  - {fileID: 4653403232541377558}
   - {fileID: -4235894201320895585}
   - {fileID: -3104638971092366712}
   - {fileID: 1271623281221941010}
+  - {fileID: -8259630572125995713}
+  - {fileID: -7227103917941882525}
   EditorParameters: []
   MasterBanks:
   - {fileID: -6923545662238580165}
   StringsBanks:
   - {fileID: 5862826468251705591}
-  cacheTime: 638751802398699224
+  cacheTime: 638754320971093766
   cacheVersion: 131622
 --- !u!114 &1271623281221941010
 MonoBehaviour:
@@ -193,38 +220,11 @@ MonoBehaviour:
   Path: Assets/Resources/FMOD/Respect_B_gamemusic/Build/Desktop/Bank A.bank
   Name: Bank A
   StudioPath: bank:/Bank A
-  lastModified: 638751802398313731
+  lastModified: 638754320970379053
   FileSizes:
   - Name: Desktop
     Value: 6901344
   Exists: 1
---- !u!114 &4653403232541377558
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/music_test1
-  m_EditorClassIdentifier: 
-  Path: event:/music_test1
-  Guid:
-    Data1: -1008485532
-    Data2: 1203442302
-    Data3: -1312188527
-    Data4: 1672907535
-  Banks:
-  - {fileID: 1947010564588559459}
-  IsStream: 1
-  Is3D: 0
-  IsOneShot: 1
-  Parameters: []
-  MinDistance: 1
-  MaxDistance: 20
-  Length: 139859
 --- !u!114 &5862826468251705591
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -240,8 +240,8 @@ MonoBehaviour:
   Path: Assets/Resources/FMOD/Respect_B_gamemusic/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 638751802398699224
+  lastModified: 638754320971093766
   FileSizes:
   - Name: Desktop
-    Value: 1026
+    Value: 1048
   Exists: 1

@@ -12,6 +12,8 @@ public class MusicManager : MonoBehaviour
 
     private enum Mode { Twelve, Sixteen }
     private Mode currentMode = Mode.Sixteen; // 기본 모드: 16분할
+    List<string> songNames = new List<string> {"Usagi_Flap","Summer_Attack!","Tok9_Train"};
+    public Dropdown songDropdown;  
 
 
     [SerializeField]
@@ -74,6 +76,7 @@ public class MusicManager : MonoBehaviour
     private void Start()
     {
         // FMOD 이벤트 인스턴스 생성
+        fmodEventPath = $"event:/{title}";
         soundInstance = RuntimeManager.CreateInstance(fmodEventPath);
         
         tickTime = 60f / bpm;
@@ -81,6 +84,7 @@ public class MusicManager : MonoBehaviour
         // 음악 길이 가져오기
         GetMusicLength();
         GenerateBars();
+        SetupDropdown();
 
         // 버튼 이벤트 연결
         button12.onClick.AddListener(SetMode12);
@@ -133,9 +137,55 @@ public class MusicManager : MonoBehaviour
         content.sizeDelta = new Vector2(content.sizeDelta.x, newHeight);
     }
 
+    void SetupDropdown()
+    {
+        // 🎵 드롭다운 초기화 및 리스트 추가
+        songDropdown.ClearOptions();
+        songDropdown.AddOptions(songNames);
+
+        // 🎵 기본 선택값
+        songDropdown.value = 0;
+
+        // 🎵 드롭다운 변경 시 이벤트 연결
+        songDropdown.onValueChanged.AddListener(delegate {
+            OnSongSelected(songDropdown.value);
+        });
+    }
+
+    void OnSongSelected(int index)
+    {
+        string selectedSong = songNames[index];
+        Debug.Log($"선택한 노래: {selectedSong}");
+
+        // 🎵 시트 교체
+        SelectSong(selectedSong);
+    }
+
+    void SelectSong(string songName)
+    {
+        title = songName;
+        fmodEventPath = $"event:/{title}";
+        soundInstance = RuntimeManager.CreateInstance(fmodEventPath);
+        GetMusicLength();
+        ClearAllNotes();
+    }
+    void ClearAllNotes()
+    {
+        foreach (Transform child in content)
+        {
+            Destroy(child.gameObject);
+        }
+
+        allNotes.Clear();
+        noteData.Clear();
+
+        Debug.Log("기존 노트를 모두 삭제했습니다.");
+        GenerateBars();
+        LoadNoteSheet();
+    }
+
     private void GenerateBars()
 {
-    float tickTimeMs = (60f / bpm) * 1000f;
     int totalTicks = Mathf.CeilToInt(content.rect.height / heightPerTick);
     float startY = 0f;
 
@@ -217,7 +267,13 @@ public class MusicManager : MonoBehaviour
     void LoadNoteSheet()
     {
         // ➡️ 저장된 txt 파일 경로
-        string path = Application.persistentDataPath + $"/sheets/{title}.txt";
+        string path = Application.persistentDataPath + $"/{title}.txt";
+        string BPM = "170";
+        if (title == "Tok9_Train")
+        {
+            BPM = "159";
+        }
+
 
         // ➡️ 파일이 없으면 기본 파일 생성
     if (!File.Exists(path))
@@ -231,7 +287,7 @@ public class MusicManager : MonoBehaviour
             $"Title: {title}",
             "",
             "[Audio]",
-            "BPM: 170",
+            $"BPM: {BPM}",
             "Offset: 0",
             "",
             "[Note]"
@@ -660,7 +716,7 @@ private void UpdateTimeFromScroll()
     {
         List<string> sheetData = GenerateNoteSheet();
         // ➡️ 파일 저장 경로 설정 (Application.persistentDataPath 사용)
-        string path = Application.persistentDataPath + $"/sheets/{title}.txt";
+        string path = Application.persistentDataPath + $"/{title}.txt";
 
         // ➡️ txt 파일로 저장
         File.WriteAllLines(path, sheetData);
@@ -692,7 +748,7 @@ private void UpdateTimeFromScroll()
             float yPos = noteRect.anchoredPosition.y;
             float height = noteRect.rect.height;
 
-            float timeInMs = yPos / heightPerSecond * 600f ; // y좌표를 MS 단위로 환산 (100px = 1 BPM 단위 시간으로 계산)
+            float timeInMs = yPos / heightPerSecond * 600f ; // y좌표를 MS 단위로 환산
             float lane = 0;
             if (xPos == -75)
             lane = 1;
