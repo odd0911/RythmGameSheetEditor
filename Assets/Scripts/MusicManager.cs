@@ -33,7 +33,7 @@ public class MusicManager : MonoBehaviour
     private List<GameObject> allNotes; // 모든 노트를 담을 리스트
     private float longNoteHeightThreshold = 100f; // 롱노트를 판별하는 높이 기준
     private string title = "Usagi_Flap";
-    public float offset = 0f; // Offset 값
+    private float offset = 100f; // Offset 값
     private float bpm = 170f; // BPM 값
     List<string> noteData = new List<string>();
 
@@ -65,6 +65,7 @@ public class MusicManager : MonoBehaviour
     private int musicLengthMs; // 음악 길이 (밀리초)
     private bool isPlaying = false; // 음악 재생 상태
     private float tickTime; // 틱타임 (초 단위)
+    private float offsetHeight = 0;
     private int pausedTimeMs = 0;
     private List<GameObject> twelveLines = new List<GameObject>();
     private List<GameObject> sixteenLines = new List<GameObject>();
@@ -84,6 +85,7 @@ public class MusicManager : MonoBehaviour
         // 음악 길이 가져오기
         GetMusicLength();
         GenerateBars();
+
         SetupDropdown();
 
         // 버튼 이벤트 연결
@@ -180,8 +182,8 @@ public class MusicManager : MonoBehaviour
         noteData.Clear();
 
         Debug.Log("기존 노트를 모두 삭제했습니다.");
-        GenerateBars();
         LoadNoteSheet();
+        GenerateBars();
     }
 
     private void GenerateBars()
@@ -204,7 +206,7 @@ public class MusicManager : MonoBehaviour
         float barPositionY = startY + (i * heightPerTick);
         GameObject bar = Instantiate(barPrefab, content);
         RectTransform barRect = bar.GetComponent<RectTransform>();
-        barRect.anchoredPosition = new Vector2(0, barPositionY);
+        barRect.anchoredPosition = new Vector2(0, barPositionY + offsetHeight);
         barRect.localScale = Vector3.one;
 
         // 12분할 라인 생성 및 비활성화
@@ -213,7 +215,7 @@ public class MusicManager : MonoBehaviour
             GameObject smallLine = Instantiate(smallLinePrefab, content);
             RectTransform smallLineRect = smallLine.GetComponent<RectTransform>();
             float smallLineY = barPositionY + (j / 12f) * heightPerTick;
-            smallLineRect.anchoredPosition = new Vector2(0, smallLineY);
+            smallLineRect.anchoredPosition = new Vector2(0, smallLineY+offsetHeight);
             smallLineRect.localScale = Vector3.one;
             smallLine.SetActive(currentMode == Mode.Twelve); // 초기화할 때 현재 모드에 해당하면 활성화
             twelveLines.Add(smallLine);
@@ -226,7 +228,7 @@ public class MusicManager : MonoBehaviour
             GameObject smallLine = Instantiate(smallLinePrefab, content);
             RectTransform smallLineRect = smallLine.GetComponent<RectTransform>();
             float smallLineY = barPositionY + (j / 16f) * heightPerTick;
-            smallLineRect.anchoredPosition = new Vector2(0, smallLineY);
+            smallLineRect.anchoredPosition = new Vector2(0, smallLineY+offsetHeight);
             smallLineRect.localScale = Vector3.one;
             smallLine.SetActive(currentMode == Mode.Sixteen); // 초기화할 때 현재 모드에 해당하면 활성화
             sixteenLines.Add(smallLine);
@@ -316,6 +318,7 @@ public class MusicManager : MonoBehaviour
             else if (line.StartsWith("Offset:"))
             {
                 offset = int.Parse(line.Replace("Offset:", "").Trim());
+                offsetHeight = offset/600*heightPerSecond;
             }
             else if (line.StartsWith("[Note]"))
             {
