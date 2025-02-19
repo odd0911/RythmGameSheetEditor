@@ -933,13 +933,10 @@ MonoBehaviour:
   barPrefab: {fileID: 5891399655867536749, guid: b13bb8b04c0dc1d459ff3104aa3f2e0b, type: 3}
   smallLinePrefab: {fileID: 3972775716534157643, guid: 7dce9abfb92bd5e4f8d8b6ea3742c46f, type: 3}
   allNotes: []
-  offset: 0
-  heightPerTick: 300
   timeText: {fileID: 682171075}
   button12: {fileID: 1524123654}
   button16: {fileID: 389272114}
-  heightPerSecond: 300
-  scrollSpeed: 100
+  scrollSpeed: 50
   notePrefab: {fileID: 1534138378787427512, guid: 4b9a1aef2a0ec714f92e7d7e2d8f85e1, type: 3}
   longNotePrefab: {fileID: 1534138378787427512, guid: 4b9a1aef2a0ec714f92e7d7e2d8f85e1, type: 3}
 --- !u!4 &319602340
