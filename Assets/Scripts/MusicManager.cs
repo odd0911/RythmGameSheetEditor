@@ -4,12 +4,12 @@ using FMODUnity;
 using TMPro; // TextMeshPro 네임스페이스
 using FMOD.Studio;
 using System.Collections.Generic;
+using System.Collections;
 using System.IO;
+using System;
 
 public class MusicManager : MonoBehaviour
 {
-    private float noteSpeed = 600;
-
     private enum Mode { Twelve, Sixteen }
     private Mode currentMode = Mode.Sixteen; // 기본 모드: 16분할
     List<string> songNames = new List<string> {"Usagi_Flap","Summer_Attack!","Tok9_Train"};
@@ -33,30 +33,25 @@ public class MusicManager : MonoBehaviour
     private List<GameObject> allNotes; // 모든 노트를 담을 리스트
     private float longNoteHeightThreshold = 100f; // 롱노트를 판별하는 높이 기준
     private string title = "Usagi_Flap";
-    private float offset = 100f; // Offset 값
+    private float offset = 0f; // Offset 값
     private float bpm = 170f; // BPM 값
     List<string> noteData = new List<string>();
-
-    [SerializeField]
-    private float heightPerTick = 50f; // 틱당 높이 (픽셀)
 
     [SerializeField]
     private TextMeshProUGUI timeText; // TMP 텍스트 컴포넌트
 
     [SerializeField]
     private Button button12; // 12분할 버튼
+
     [SerializeField]
     private Button button16; // 16분할 버튼
 
-    [SerializeField]
-    private float heightPerSecond = 100f; // 초당 Content 높이 (비율)
     [SerializeField] 
     private float scrollSpeed = 100f; // 스크롤 속도 조절
     [SerializeField] 
-    private GameObject notePrefab; // ➡️ 노트 프리팹 추가
+    public GameObject notePrefab; // ➡️ 노트 프리팹 추가
     public GameObject longNotePrefab;
     private GameObject movingNote; // ➡️ 커서를 따라다니는 노트
-    private bool isPlacingNote = false; // ➡️ 노트 배치 중인지 여부
     private List<RectTransform> smallBars = new List<RectTransform>();
 
     // ➡️ 노트가 배치될 X 좌표 설정
@@ -64,7 +59,7 @@ public class MusicManager : MonoBehaviour
 
     private int musicLengthMs; // 음악 길이 (밀리초)
     private bool isPlaying = false; // 음악 재생 상태
-    private float tickTime; // 틱타임 (초 단위)
+    private float tickTimeMs; // 틱타임 (초 단위)
     private float offsetHeight = 0;
     private int pausedTimeMs = 0;
     private List<GameObject> twelveLines = new List<GameObject>();
@@ -80,11 +75,10 @@ public class MusicManager : MonoBehaviour
         fmodEventPath = $"event:/{title}";
         soundInstance = RuntimeManager.CreateInstance(fmodEventPath);
         
-        tickTime = 60f / bpm;
+        tickTimeMs = 60f / bpm *1000;
 
         // 음악 길이 가져오기
         GetMusicLength();
-        GenerateBars();
 
         SetupDropdown();
 
@@ -92,6 +86,7 @@ public class MusicManager : MonoBehaviour
         button12.onClick.AddListener(SetMode12);
         button16.onClick.AddListener(SetMode16);
         LoadNoteSheet();
+        GenerateBars();
         PlaceSheetNotes();
     }
 
@@ -131,12 +126,10 @@ public class MusicManager : MonoBehaviour
 
     private void AdjustContentHeight()
     {
-        // 음악 길이를 초 단위로 변환
-        float musicLengthSeconds = musicLengthMs / noteSpeed;
 
         // Content의 높이를 음악 길이에 비례하여 설정
-        float newHeight = musicLengthSeconds * heightPerSecond;
-        content.sizeDelta = new Vector2(content.sizeDelta.x, newHeight);
+        float newHeight = musicLengthMs;
+        content.sizeDelta = new Vector2(content.sizeDelta.x, newHeight/2);
     }
 
     void SetupDropdown()
@@ -175,21 +168,27 @@ public class MusicManager : MonoBehaviour
     {
         foreach (Transform child in content)
         {
-            Destroy(child.gameObject);
+            DestroyImmediate(child.gameObject);
         }
 
-        allNotes.Clear();
+        allNotes = new List<GameObject>(); // 리스트를 새롭게 할당
         noteData.Clear();
 
         Debug.Log("기존 노트를 모두 삭제했습니다.");
+        StartCoroutine(DelayedReload()); // 한 프레임 뒤 실행
+    }
+
+    IEnumerator DelayedReload()
+    {
+        yield return new WaitForEndOfFrame(); // 한 프레임 대기
         LoadNoteSheet();
         GenerateBars();
+        PlaceSheetNotes();
     }
 
     private void GenerateBars()
 {
-    int totalTicks = Mathf.CeilToInt(content.rect.height / heightPerTick);
-    float startY = 0f;
+    int totalTicks = Mathf.CeilToInt(musicLengthMs / tickTimeMs);
 
     // 기존에 생성된 모든 바와 작은 라인 삭제
     foreach (Transform child in content)
@@ -203,19 +202,19 @@ public class MusicManager : MonoBehaviour
     // 바 및 작은 라인 생성
     for (int i = 0; i < totalTicks; i++)
     {
-        float barPositionY = startY + (i * heightPerTick);
+        float barPositionY = i * tickTimeMs;
         GameObject bar = Instantiate(barPrefab, content);
         RectTransform barRect = bar.GetComponent<RectTransform>();
-        barRect.anchoredPosition = new Vector2(0, barPositionY + offsetHeight);
+        barRect.anchoredPosition = new Vector2(0, offsetHeight + barPositionY/2);
         barRect.localScale = Vector3.one;
 
         // 12분할 라인 생성 및 비활성화
-        for (int j = 1; j <= 12; j++)
+        for (int j = 1; j <= 6; j++)
         {
             GameObject smallLine = Instantiate(smallLinePrefab, content);
             RectTransform smallLineRect = smallLine.GetComponent<RectTransform>();
-            float smallLineY = barPositionY + (j / 12f) * heightPerTick;
-            smallLineRect.anchoredPosition = new Vector2(0, smallLineY+offsetHeight);
+            float smallLineY = barPositionY + (j / 6f) * tickTimeMs;
+            smallLineRect.anchoredPosition = new Vector2(0, offsetHeight +smallLineY/2);
             smallLineRect.localScale = Vector3.one;
             smallLine.SetActive(currentMode == Mode.Twelve); // 초기화할 때 현재 모드에 해당하면 활성화
             twelveLines.Add(smallLine);
@@ -223,12 +222,12 @@ public class MusicManager : MonoBehaviour
         }
 
         // 16분할 라인 생성 및 비활성화
-        for (int j = 1; j <= 16; j++)
+        for (int j = 1; j <= 8; j++)
         {
             GameObject smallLine = Instantiate(smallLinePrefab, content);
             RectTransform smallLineRect = smallLine.GetComponent<RectTransform>();
-            float smallLineY = barPositionY + (j / 16f) * heightPerTick;
-            smallLineRect.anchoredPosition = new Vector2(0, smallLineY+offsetHeight);
+            float smallLineY = barPositionY + (j / 8f) * tickTimeMs;
+            smallLineRect.anchoredPosition = new Vector2(0, offsetHeight +smallLineY/2);
             smallLineRect.localScale = Vector3.one;
             smallLine.SetActive(currentMode == Mode.Sixteen); // 초기화할 때 현재 모드에 해당하면 활성화
             sixteenLines.Add(smallLine);
@@ -318,7 +317,7 @@ public class MusicManager : MonoBehaviour
             else if (line.StartsWith("Offset:"))
             {
                 offset = int.Parse(line.Replace("Offset:", "").Trim());
-                offsetHeight = offset/600*heightPerSecond;
+                offsetHeight = offset/2;
             }
             else if (line.StartsWith("[Note]"))
             {
@@ -335,6 +334,7 @@ public class MusicManager : MonoBehaviour
 
     void PlaceSheetNotes()
     {
+        Debug.Log(notePrefab == null ? "notePrefab is NULL" : "notePrefab is OK");
         foreach (string note in noteData)
         {
             string[] parts = note.Split(',');
@@ -349,27 +349,30 @@ public class MusicManager : MonoBehaviour
             else if (lane == 3) xPos = 25;
             else if (lane == 4) xPos = 75;
 
-            float yPos = time / 600f * heightPerSecond;
+            float yPos = time/2;
 
             if (type == 0)
             {
                 // ➡️ 숏노트 배치
                 GameObject noteObject = Instantiate(notePrefab, content);
                 noteObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(xPos, yPos);
+                allNotes.Add(noteObject);
+                Debug.Log("노트 배치!");
             }
             else if (type == 1)
             {
                 // ➡️ 롱노트 배치
                 float endTime = float.Parse(parts[3].Trim());
-                float endYPos = endTime / 600f * heightPerSecond;
+                float endYPos = endTime / 2;
 
                 GameObject longNoteObject = Instantiate(longNotePrefab, content);
                 RectTransform rect = longNoteObject.GetComponent<RectTransform>();
                 rect.anchoredPosition = new Vector2(xPos, yPos);
-                rect.sizeDelta = new Vector2(rect.sizeDelta.x, endYPos - yPos);
+                rect.sizeDelta = new Vector2(rect.sizeDelta.x, endYPos);
+                allNotes.Add(longNoteObject);
+                Debug.Log("롱노트 배치!");
             }
         }
-
         Debug.Log("노트 배치 완료!");
     }
 
@@ -411,7 +414,6 @@ public class MusicManager : MonoBehaviour
                     // ➡️ 롱노트 끝점 고정 및 가장 가까운 작은바에 스냅
                     SnapLongNoteToClosestPoint();
                     movingNote = null;
-                    isPlacingNote = false;
                     isSettingLongNoteEnd = false;
 
                     // ➡️ 다음 노트 미리 생성
@@ -423,8 +425,6 @@ public class MusicManager : MonoBehaviour
                 // ➡️ 숏노트 모드 ➡️ 가장 가까운 작은바에 스냅 후 고정
                 SnapNoteToClosestPoint();
                 movingNote = null;
-                isPlacingNote = false;
-
                 // ➡️ 다음 노트 미리 생성
                 CreateFollowingNote();
             }
@@ -476,7 +476,6 @@ public class MusicManager : MonoBehaviour
                 {
                     allNotes.Remove(child.gameObject);
                     Destroy(child.gameObject);
-                    isPlacingNote = true;
 
                     break;
                 }
@@ -496,7 +495,6 @@ public class MusicManager : MonoBehaviour
             movingNote = Instantiate(notePrefab, content);
         }
         movingNote.GetComponent<RectTransform>().localScale = Vector3.one;
-        isPlacingNote = true;
     }
 
     private void SnapLongNoteStartToClosestPoint()
@@ -578,7 +576,6 @@ public class MusicManager : MonoBehaviour
     {
         Destroy(movingNote);
         movingNote = null;
-        isPlacingNote = false;
         return;
     }
 
@@ -691,7 +688,7 @@ private void UpdateTimeFromScroll()
             pausedTimeMs = Mathf.Clamp(pausedTimeMs, 0, musicLengthMs); // 범위 제한
 
             // 변경된 시간에 맞춰 Content 위치 조정
-            float newYPosition = -(pausedTimeMs / 600f) * heightPerSecond;
+            float newYPosition = -pausedTimeMs/2;
             content.anchoredPosition = new Vector2(content.anchoredPosition.x, newYPosition);
 
             // UI에 업데이트된 시간 표시
@@ -708,8 +705,7 @@ private void UpdateTimeFromScroll()
         soundInstance.getTimelinePosition(out currentTimelinePosition);
 
         // 재생된 시간(초)에 비례하여 Content 위치 업데이트
-        float elapsedTimeSeconds = currentTimelinePosition / 600f;
-        float newYPosition = elapsedTimeSeconds * heightPerSecond;//현재 content위치(-newPosition) = 현재 시간 * 시간비례높이상수 / 600
+        float newYPosition = currentTimelinePosition/2;
 
         // Content 위치 설정 (아래로 이동)
         content.anchoredPosition = new Vector2(content.anchoredPosition.x, -newYPosition);
@@ -748,10 +744,10 @@ private void UpdateTimeFromScroll()
         {
             RectTransform noteRect = note.GetComponent<RectTransform>();
             float xPos = noteRect.anchoredPosition.x;
-            float yPos = noteRect.anchoredPosition.y;
-            float height = noteRect.rect.height;
+            float yPos = Mathf.Round(noteRect.anchoredPosition.y);
+            float height = Mathf.Round(noteRect.rect.height);
 
-            float timeInMs = yPos / heightPerSecond * 600f ; // y좌표를 MS 단위로 환산
+            float timeInMs = yPos * 2; // y좌표를 MS 단위로 환산
             float lane = 0;
             if (xPos == -75)
             lane = 1;
@@ -765,7 +761,7 @@ private void UpdateTimeFromScroll()
             if (height > longNoteHeightThreshold)
             {
                 // 롱노트 판별: 노트가 롱노트일 경우 시작과 끝점 기록
-                string longNote = $"{timeInMs}, 1, {lane}, {height / heightPerSecond * 600f}";
+                string longNote = $"{timeInMs}, 1, {lane}, {height * 2}";
                 longNotes.Add(longNote);
             }
             else
